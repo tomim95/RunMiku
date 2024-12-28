@@ -13,11 +13,13 @@ public class Person : MonoBehaviour
     private Rigidbody2D rb;
 
     private bool stunned = false;
+    private float timer = 0;
 
     void Start()
     {
         player = FindObjectOfType<PlayerMove>().gameObject;
         rb = GetComponent<Rigidbody2D>();
+
     }
 
     void FixedUpdate()
@@ -28,6 +30,12 @@ public class Person : MonoBehaviour
             Vector2 direction = (player.transform.position - transform.position).normalized;
             // Set velocity of the Rigidbody2D
             rb.velocity = direction * Random.Range(minSpeed, maxSpeed);
+            timer = 0;
+        }
+
+        else
+        {
+            timer += Time.fixedDeltaTime;
         }
     }
 
@@ -38,6 +46,11 @@ public class Person : MonoBehaviour
             stunned = true;
             rb.AddForce((transform.position - player.transform.position).normalized * (aggroDistance - Vector3.Distance(transform.position, player.transform.position)) * 30);
             Invoke("Recover", 2);
+        }
+
+        if (timer > 3)
+        {
+            Destroy(gameObject);
         }
     }
 

@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3870920888181742669}
   - component: {fileID: 4971989643708299774}
   - component: {fileID: 6247828287100152077}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Person
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -47,8 +47,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d16feb597fb85c24db272d4efc0b0f3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 2
-  aggroDistance: 10
+  minSpeed: 1
+  maxSpeed: 3
+  aggroDistance: 15
 --- !u!58 &4971989643708299774
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -121,7 +122,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3365898566788382056}
   - component: {fileID: 2027699637415444675}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: 9-Sliced
   m_TagString: Untagged
   m_Icon: {fileID: 0}
