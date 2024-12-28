@@ -2,10 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMove : MonoBehaviour
 {
     public float speed = 5f; // Movement speed
+    private Rigidbody2D rb;
     private Vector2 velocity;
+
+    void Awake()
+    {
+        // Get the Rigidbody2D component
+        rb = GetComponent<Rigidbody2D>();
+    }
 
     void Update()
     {
@@ -27,9 +35,18 @@ public class PlayerMove : MonoBehaviour
         {
             velocity = velocity.normalized * speed;
         }
+    }
 
-        // Apply the velocity to the position
-        transform.position += (Vector3)velocity * Time.deltaTime;
+    void FixedUpdate()
+    {
+        // Apply the velocity to the Rigidbody2D
+        rb.velocity = velocity;
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        print("collision happened");
     }
 }
+
 
