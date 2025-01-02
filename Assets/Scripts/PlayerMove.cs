@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using UnityEditor;
+
+#if UNITY_EDITOR
 using UnityEditor.Animations;
 using UnityEditor.Experimental.GraphView;
+#endif
+
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -15,16 +19,20 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] float speed = 5f;               // Movement speed
     [SerializeField] float skillCooldown = 10;
     [SerializeField] AudioClip[] audioClips;
+    [SerializeField] GameObject skillIcon;
 
     private AudioSource audioSource;
     private Animator animator;
     private GameObject escapee;
+    private GameManager gameManager;
 
     private Rigidbody2D rb;
     private Vector2 velocity;
     private float timer = 0;
-    private bool runTimer = false;
+    private bool runTimer = true;
     private bool detained = false;
+    private bool skillOnCooldown = true;
+    private bool wasGameOn = false;
 
     //TODO remove?
     private string currentAnim = "";
@@ -61,133 +69,177 @@ public class PlayerMove : MonoBehaviour
         escapee = FindObjectOfType<Escapee>().gameObject;
         audioSource = GetComponent<AudioSource>();
         animator = GetComponent<Animator>();
+        gameManager = FindObjectOfType<GameManager>();
         startSpeed = speed;
+        ChangeAnimation("Idle", 0.2f);
+
+        if (skillIcon == null)
+        {
+            GameObject HUDCanvas = GameObject.FindWithTag("HUDCanvas");
+
+            skillIcon = HUDCanvas.transform.Find("ScreamIcon").gameObject;
+        }
     }
 
     void Update()
     {
-        if (!detained && !flinched)
+        // Check if gameIsOn has just transitioned from false to true
+        if (gameManager.gameIsOn && !wasGameOn)
         {
-            //Animations
-            if (rb.velocity.magnitude > 0.1f)
-            {
-                ChangeAnimation("Run", 0.2f);
-            }
+            // Trigger the skill icon animation once when gameIsOn turns true
+            skillIcon.GetComponent<Animator>().Play("ScreamIconRun");
 
-            else
-            {
-                ChangeAnimation("Idle", 0.2f);
-            }
-
-            if (rb.velocity.x > 0)
-            {
-                transform.localScale = new Vector3(-1, 1, 1);
-            }
-
-            else if (rb.velocity.x < 0)
-            {
-                transform.localScale = new Vector3(1, 1, 1);
-            }
-
-
-            // Reset velocity each frame
-            velocity = Vector2.zero;
-
-            // Check input
-            if (Input.GetKey(KeyCode.W)) // Move up
-                velocity.y += 1;
-            if (Input.GetKey(KeyCode.S)) // Move down
-                velocity.y -= 1;
-            if (Input.GetKey(KeyCode.D)) // Move right
-                velocity.x += 1;
-            if (Input.GetKey(KeyCode.A)) // Move left
-                velocity.x -= 1;
-
-            // Normalize the velocity if there's input to prevent diagonal speed boost
-            if (velocity != Vector2.zero)
-            {
-                velocity = velocity.normalized * speed;
-            }
-
-            // Update guide position (between player and runner, clamped within the camera view)
-            UpdateGuidePosition();
-
-            // Calculate direction vector from guide to runner for rotation
-            Vector2 direction = runner.transform.position - guide.transform.position;
-
-            // Get the angle in radians between the guide and the runner
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-            // Apply the angle to the guide object (in 2D, we only rotate around the Z axis)
-            guide.transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
-
-            // Check if the runner is in the camera view and hide/show the guide accordingly
-            CheckIfRunnerIsVisible();
-
-            if (runTimer)
-            {
-                timer += Time.deltaTime;
-            }
-
-            if (timer >= skillCooldown)
-            {
-                runTimer = false;
-                timer = 0;
-            }
-
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                SpeedBoost();
-
-                Collider2D[] runnersInRange = Physics2D.OverlapCircleAll(transform.position, 5);
-
-                audioSource.clip = audioClips[0];
-                audioSource.Play();
-
-                if (runnersInRange.Length <= 0)
-                {
-                    print("No runners in range");
-                    return;
-                }
-
-                foreach (Collider2D r in runnersInRange)
-                {
-                    if (r.gameObject.GetComponent<Rigidbody2D>() != null && r.gameObject.GetComponent<Person>() != null)
-                    {
-                        // Vector from player to the escapee
-                        Vector2 vectorToEscapee = escapee.transform.position - transform.position;
-
-                        // Vector from player to the runner
-                        Vector2 vectorToRunner = r.transform.position - transform.position;
-
-                        // Cross product to determine side
-                        float cross = vectorToEscapee.x * vectorToRunner.y - vectorToEscapee.y * vectorToRunner.x;
-
-                        // Determine the perpendicular vector to push the runner
-                        Vector2 perpendicularVectorToEscapee = (cross > 0)
-                            ? new Vector2(-vectorToEscapee.y, vectorToEscapee.x) // Clockwise direction
-                            : new Vector2(vectorToEscapee.y, -vectorToEscapee.x); // Counterclockwise direction
-
-                        // Normalize and apply force
-                        r.gameObject.GetComponent<Person>().SetStunnedStatus(true);
-                        r.gameObject.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
-                        r.gameObject.GetComponent<Rigidbody2D>().AddForce(perpendicularVectorToEscapee.normalized *
-                            (5 - Vector2.Distance(r.transform.position, transform.position)) * 50);
-                    }
-                }
-            }
-
+            // Update the flag to indicate that the game is now active
+            wasGameOn = true;
         }
 
-        else if (flinched)
+        if (gameManager.gameIsOn)
         {
-            Invoke("RecoverFromFlinch", .5f);
+            if (!guide.activeInHierarchy)
+            {
+                guide.SetActive(true);
+            }
+
+            if (!detained && !flinched)
+            {
+                //Animations
+                if (rb.velocity.magnitude > 0.1f)
+                {
+                    ChangeAnimation("Run", 0.2f);
+                }
+
+                else
+                {
+                    ChangeAnimation("Idle", 0.2f);
+                }
+
+                if (rb.velocity.x > 0)
+                {
+                    transform.localScale = new Vector3(-1, 1, 1);
+                }
+
+                else if (rb.velocity.x < 0)
+                {
+                    transform.localScale = new Vector3(1, 1, 1);
+                }
+
+
+                // Reset velocity each frame
+                velocity = Vector2.zero;
+
+                // Check input
+                if (Input.GetKey(KeyCode.W)) // Move up
+                    velocity.y += 1;
+                if (Input.GetKey(KeyCode.S)) // Move down
+                    velocity.y -= 1;
+                if (Input.GetKey(KeyCode.D)) // Move right
+                    velocity.x += 1;
+                if (Input.GetKey(KeyCode.A)) // Move left
+                    velocity.x -= 1;
+
+                // Normalize the velocity if there's input to prevent diagonal speed boost
+                if (velocity != Vector2.zero)
+                {
+                    velocity = velocity.normalized * speed;
+                }
+
+                // Update guide position (between player and runner, clamped within the camera view)
+                UpdateGuidePosition();
+
+                // Calculate direction vector from guide to runner for rotation
+                Vector2 direction = runner.transform.position - guide.transform.position;
+
+                // Get the angle in radians between the guide and the runner
+                float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+                // Apply the angle to the guide object (in 2D, we only rotate around the Z axis)
+                guide.transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
+
+                // Check if the runner is in the camera view and hide/show the guide accordingly
+                CheckIfRunnerIsVisible();
+
+                if (runTimer)
+                {
+                    timer += Time.deltaTime;
+                }
+
+                if (timer > 9.5f)
+                {
+                    skillIcon.GetComponent<AudioSource>().Play();
+                }
+
+                if (timer >= skillCooldown)
+                {
+                    runTimer = false;
+                    skillOnCooldown = false;
+                    timer = 0;
+                }
+
+                if (Input.GetKeyDown(KeyCode.Space) && !skillOnCooldown)
+                {
+                    SpeedBoost();
+                    SetSkillOnCooldown();
+
+
+                    skillIcon.GetComponent<Animator>().Play("ScreamIconRun");
+
+                    Collider2D[] runnersInRange = Physics2D.OverlapCircleAll(transform.position, 7);
+
+                    audioSource.clip = audioClips[0];
+                    audioSource.Play();
+
+                    if (runnersInRange.Length <= 0)
+                    {
+                        print("No runners in range");
+                        return;
+                    }
+
+                    foreach (Collider2D r in runnersInRange)
+                    {
+                        if (r.gameObject.GetComponent<Rigidbody2D>() != null && r.gameObject.GetComponent<Person>() != null)
+                        {
+                            // Vector from player to the escapee
+                            Vector2 vectorToEscapee = escapee.transform.position - transform.position;
+
+                            // Vector from player to the runner
+                            Vector2 vectorToRunner = r.transform.position - transform.position;
+
+                            // Cross product to determine side
+                            float cross = vectorToEscapee.x * vectorToRunner.y - vectorToEscapee.y * vectorToRunner.x;
+
+                            // Determine the perpendicular vector to push the runner
+                            Vector2 perpendicularVectorToEscapee = (cross > 0)
+                                ? new Vector2(-vectorToEscapee.y, vectorToEscapee.x) // Clockwise direction
+                                : new Vector2(vectorToEscapee.y, -vectorToEscapee.x); // Counterclockwise direction
+
+                            // Normalize and apply force
+                            r.gameObject.GetComponent<Person>().SetStunnedStatus(true);
+                            r.gameObject.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+                            r.gameObject.GetComponent<Rigidbody2D>().AddForce(perpendicularVectorToEscapee.normalized *
+                                (5 - Vector2.Distance(r.transform.position, transform.position)) * 50);
+                        }
+                    }
+                }
+
+            }
+
+            else if (flinched)
+            {
+                ChangeAnimation("Flinch", 0);
+                Invoke("RecoverFromFlinch", .5f);
+            }
+        }
+
+        else
+        {
+            //guide.SetActive(false);
+            rb.velocity = Vector2.zero;
         }
     }
 
     void SpeedBoost()
     {
-        speed = startSpeed * 1.5f;
+        speed = startSpeed * 1.4f;
 
         StartCoroutine(SlowDownBackToNormalSpeed());
     }
@@ -217,10 +269,16 @@ public class PlayerMove : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!detained && !flinched)
+
+        if (!detained && !flinched && gameManager.gameIsOn)
         {
             // Apply the velocity to the Rigidbody2D
             rb.velocity = velocity;
+        }
+
+        else if (!gameManager.gameIsOn) 
+        {
+            rb.velocity = Vector2.zero;
         }
     }
 
@@ -278,11 +336,33 @@ public class PlayerMove : MonoBehaviour
 
     public void SetSkillOnCooldown()
     {
+        skillOnCooldown = true;
         runTimer = true;
     }
 
-    public bool IsSkillOnCooldown() 
-    { 
-        return runTimer; 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == "Escapee")
+        {
+            gameManager.gameIsOn = false;
+            gameManager.SetCrowdNoises();
+
+            // Determine the side of the collision
+            float offsetX = (transform.position.x < collision.transform.position.x) ? -0.5f : 0.5f;
+
+            // Set the new position
+            transform.position = new Vector2(collision.transform.position.x + offsetX, collision.transform.position.y);
+
+            // Flip this object to face the collided object
+            transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * Mathf.Sign(offsetX), transform.localScale.y, transform.localScale.z);
+
+            // Flip the collided object to face this object
+            collision.transform.localScale = new Vector3(Mathf.Abs(collision.transform.localScale.x) * -Mathf.Sign(offsetX), collision.transform.localScale.y, collision.transform.localScale.z);
+
+            animator.Play("Idle");
+            collision.gameObject.GetComponent<Animator>().Play("EscIdle");
+            collision.gameObject.GetComponent<Escapee>().EnableHeart();
+            gameManager.HandleGameWin();
+        }
     }
 }

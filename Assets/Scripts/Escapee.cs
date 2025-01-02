@@ -17,6 +17,7 @@ public class Escapee : MonoBehaviour
     private Rigidbody2D rb;
     private Animator animator;
     private SpriteRenderer spriteRenderer;
+    private GameManager gameManager;
 
     private Vector2 currentDirection;
     private Vector2 patrolDirection;
@@ -32,31 +33,50 @@ public class Escapee : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        gameManager = FindObjectOfType<GameManager>();
 
         currentSpeed = baseSpeed;
         currentDirection = Vector2.right; // Initial direction
         patrolDirection = GetRandomPatrolDirection();
+        ChangeAnimation("EscIdle", 0f);
 
         StartCoroutine(PatrolDirectionChangeRoutine());
     }
 
     private void Update()
     {
-        HandleAnimation();
-        HandleSpeedBoostDetection();
+        if (gameManager.gameIsOn)
+        {
+            print($"Speed: {currentSpeed}, BaseSpeed: {baseSpeed} ");
+            HandleAnimation();
+            HandleSpeedBoostDetection();
+        }
+
+        else
+        {
+            rb.velocity = Vector2.zero;
+        }
     }
 
     private void FixedUpdate()
     {
-        float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
-
-        if (distanceToPlayer < safeDistance && !player.GetComponent<PlayerMove>().GetDetainedStatus())
+        if (gameManager.gameIsOn)
         {
-            EscapeFromPlayer();
+            float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
+
+            if (distanceToPlayer < safeDistance && !player.GetComponent<PlayerMove>().GetDetainedStatus())
+            {
+                EscapeFromPlayer();
+            }
+            else
+            {
+                Patrol();
+            }
         }
+
         else
         {
-            Patrol();
+            rb.velocity = Vector2.zero;
         }
     }
 
@@ -108,6 +128,7 @@ public class Escapee : MonoBehaviour
         {
             if (collider.CompareTag("Runner"))
             {
+                baseSpeed = currentSpeed;
                 StartCoroutine(SpeedBoost());
                 break;
             }
@@ -147,18 +168,25 @@ public class Escapee : MonoBehaviour
     {
         if (rb.velocity.magnitude > 0.1f)
         {
-            ChangeAnimation("EscRun", 0.2f);
+            ChangeAnimation("EscRun", 0);
         }
         else
         {
-            ChangeAnimation("EscIdle", 0.2f);
+            ChangeAnimation("EscIdle", 0);
         }
 
         // Flip sprite based on movement direction
-        spriteRenderer.flipX = rb.velocity.x > 0;
+        if (rb.velocity.x > 0)
+        {
+            transform.localScale = new Vector3(-1, 1, 1);
+        }
+        else if (rb.velocity.x < 0)
+        {
+            transform.localScale = new Vector3(1, 1, 1);
+        }
     }
 
-    private void ChangeAnimation(string animation, float crossfade)
+    public void ChangeAnimation(string animation, float crossfade = 0)
     {
         if (currentAnim != animation)
         {
@@ -175,5 +203,10 @@ public class Escapee : MonoBehaviour
 
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, patrolRadius);
+    }
+
+    public void EnableHeart()
+    {
+        GetComponentInChildren<Heart>(true).gameObject.SetActive(true);
     }
 }

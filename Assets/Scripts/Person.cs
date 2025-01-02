@@ -12,6 +12,8 @@ public class Person : MonoBehaviour
     [SerializeField] float aggroDistance = 15;
     [SerializeField] private float patrolRadius = 3f; // Radius for random patrolling
     [SerializeField] private float patrolSpeed = 2f; // Speed while patrolling
+    
+    private GameManager gameManager;
 
     [SerializeField] AudioClip[] audioClips;
     [SerializeField] AudioClip[] audioClips2;
@@ -60,11 +62,21 @@ public class Person : MonoBehaviour
 
     public void SetStunnedStatus(bool status) { this.stunned = status; }
 
+    public void Initialize(GameManager gm)
+    {
+        gameManager = gm;
+    }
+
     void Start()
     {
         runnerType = Random.Range(0, 2);
         audioSources = GetComponents<AudioSource>();
         animator = GetComponent<Animator>();
+
+        if (gameManager != null )
+        {
+            gameManager = FindObjectOfType<GameManager>();
+        }
 
         player = FindObjectOfType<PlayerMove>().gameObject;
         escapee = FindObjectOfType<Escapee>().gameObject;
@@ -122,7 +134,7 @@ public class Person : MonoBehaviour
                 }
 
                 // If the player is too close to the runner (within 1/5 of aggro distance)
-                else if (gameObject.tag == "Runner" && chaseTarget == player && Vector3.Distance(player.transform.position, transform.position) < aggroDistance / 3 && activeMode)
+                else if (gameObject.tag == "Runner" && chaseTarget == player && Vector3.Distance(player.transform.position, transform.position) < aggroDistance / 4 && activeMode)
                 {
                     Vector2 direction = (player.transform.position - transform.position).normalized;
                     rb.velocity = direction * speed;
@@ -181,6 +193,11 @@ public class Person : MonoBehaviour
 
     private void Update()
     {
+        if (!gameManager.gameIsOn)
+        {
+            Destroy(gameObject);
+        }
+
         if (!detainedRunner && rb.velocity.x > 0)
         {
             //spriteRenderer.flipX = true;
@@ -204,7 +221,7 @@ public class Person : MonoBehaviour
 
             foreach (Collider2D player in playersInRange)
             {
-                if (player.gameObject.tag == "Player" && Vector2.Distance(player.transform.position, transform.position) < 4)
+                if (player.gameObject.tag == "Player" && Vector2.Distance(player.transform.position, transform.position) < 5)
                 {
                     chaseTarget = this.player;
                 }
@@ -341,16 +358,6 @@ public class Person : MonoBehaviour
                 collision.gameObject.GetComponent<Rigidbody2D>().isKinematic = true;
                 collision.gameObject.transform.SetParent(this.transform, true);
 
-                //if (escapee.transform.position.x > transform.position.x)
-                //{
-                //    collision.gameObject.GetComponent<PlayerMove>().SetDetained(true, false);
-                //    collision.gameObject.transform.position = new Vector2(transform.position.x + .5f, transform.position.y);
-                //}
-                //else
-                //{
-                //    collision.gameObject.GetComponent<PlayerMove>().SetDetained(true, true);
-                //    collision.gameObject.transform.position = new Vector2(transform.position.x - .5f, transform.position.y);
-                //}
 
                 StartCoroutine(ReloadScene());
             }
@@ -387,7 +394,7 @@ public class Person : MonoBehaviour
     IEnumerator ReloadScene()
     {
         yield return new WaitForSeconds(4);
-        SceneManager.LoadScene(0);
+        SceneManager.LoadScene(1);
     }
 
     void ChangeAnimation(string animation, float crossfade)

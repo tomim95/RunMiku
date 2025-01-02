@@ -10,10 +10,37 @@ public class Spawner : MonoBehaviour
     [SerializeField] private GameObject person;            // The prefab to spawn
     [SerializeField] private GameObject player;            // Reference to the player object
 
+    private Coroutine spawnCoroutine;
+    private GameManager gameManager;
+
     private void Start()
     {
-        // Start spawning immediately
-        StartCoroutine(SpawnAudience(true));
+        gameManager = FindObjectOfType<GameManager>();
+        // Start spawning if the game is on when the game starts
+        CheckAndStartSpawning();
+    }
+
+    private void Update()
+    {
+        // Continuously check the GameIsOn property and start/stop spawning accordingly
+        CheckAndStartSpawning();
+    }
+
+    private void CheckAndStartSpawning()
+    {
+        bool gameIsOn = gameManager != null && gameManager.gameIsOn == true;
+
+        // Start spawning if GameIsOn is true and the spawning hasn't started yet
+        if (gameIsOn && spawnCoroutine == null)
+        {
+            spawnCoroutine = StartCoroutine(SpawnAudience(true));
+        }
+        // Stop spawning if GameIsOn becomes false
+        else if (!gameIsOn && spawnCoroutine != null)
+        {
+            StopCoroutine(spawnCoroutine);
+            spawnCoroutine = null;
+        }
     }
 
     private IEnumerator SpawnAudience(bool instantSpawn = false)
@@ -43,6 +70,7 @@ public class Spawner : MonoBehaviour
                 Quaternion.identity
             );
             personObj.transform.parent = transform;
+            personObj.GetComponent<Person>().Initialize(gameManager);
 
             // Randomly assign the person type (Chaser or Runner)
             bool isChaser = Random.Range(0, 2) == 1;
@@ -84,5 +112,4 @@ public class Spawner : MonoBehaviour
 
         return spawnPositions;
     }
-
 }

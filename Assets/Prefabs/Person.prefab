@@ -54,8 +54,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d16feb597fb85c24db272d4efc0b0f3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  runnerMinSpeed: 3
-  runnerMaxSpeed: 4
+  runnerMinSpeed: 3.7
+  runnerMaxSpeed: 4.2
   chaserSpeed: 4.5
   aggroDistance: 10
   patrolRadius: 3

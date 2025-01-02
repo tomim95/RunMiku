@@ -116,7 +116,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: -1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 577271617118633326}
@@ -141,6 +141,7 @@ MonoBehaviour:
   audioClips:
   - {fileID: 8300000, guid: d4e0d0b5f16e6d347adc208ab55cb63f, type: 3}
   - {fileID: 8300000, guid: abdac0de108fdab42bd116582a58d900, type: 3}
+  skillIcon: {fileID: 0}
   flinched: 0
 --- !u!50 &274970067570474149
 Rigidbody2D:
@@ -216,7 +217,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 0.7
+  m_Volume: 1
   m_Pitch: 1
   Loop: 0
   Mute: 0

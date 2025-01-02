@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa31f00c8c06a1f48ad0bea801c10cb3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnRate: 2
+  spawnRate: 1
   spawnRange: 10
-  spawnBulkCount: 50
+  spawnBulkCount: 20
   person: {fileID: 830112246201037561, guid: bd44988d439e47146ae76d9834c695ad, type: 3}
   player: {fileID: 0}
