@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
@@ -13,10 +14,11 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] GameObject runner;    // The runner object (target)
     [SerializeField] float speed = 5f;               // Movement speed
     [SerializeField] float skillCooldown = 10;
-
     [SerializeField] AudioClip[] audioClips;
 
     private AudioSource audioSource;
+    private Animator animator;
+    private GameObject escapee;
 
     private Rigidbody2D rb;
     private Vector2 velocity;
@@ -24,7 +26,12 @@ public class PlayerMove : MonoBehaviour
     private bool runTimer = false;
     private bool detained = false;
 
+    //TODO remove?
+    private string currentAnim = "";
+
     public bool flinched = false;
+
+    private float startSpeed;
 
     public void SetDetained(bool detained) 
     { 
@@ -32,8 +39,14 @@ public class PlayerMove : MonoBehaviour
         {
             audioSource.clip = audioClips[1];
             audioSource.Play();
+            this.detained = detained;
+
+            if(currentAnim != "Run")
+            {
+                animator.CrossFade("Run", 0.2f);
+            }
         }
-        this.detained = detained; 
+        
     }
     public bool GetDetainedStatus() { return detained; }
 
@@ -45,13 +58,38 @@ public class PlayerMove : MonoBehaviour
 
     private void Start()
     {
+        escapee = FindObjectOfType<Escapee>().gameObject;
         audioSource = GetComponent<AudioSource>();
+        animator = GetComponent<Animator>();
+        startSpeed = speed;
     }
 
     void Update()
     {
         if (!detained && !flinched)
         {
+            //Animations
+            if (rb.velocity.magnitude > 0.1f)
+            {
+                ChangeAnimation("Run", 0.2f);
+            }
+
+            else
+            {
+                ChangeAnimation("Idle", 0.2f);
+            }
+
+            if (rb.velocity.x > 0)
+            {
+                transform.localScale = new Vector3(-1, 1, 1);
+            }
+
+            else if (rb.velocity.x < 0)
+            {
+                transform.localScale = new Vector3(1, 1, 1);
+            }
+
+
             // Reset velocity each frame
             velocity = Vector2.zero;
 
@@ -99,30 +137,76 @@ public class PlayerMove : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                SpeedBoost();
+
                 Collider2D[] runnersInRange = Physics2D.OverlapCircleAll(transform.position, 5);
 
                 audioSource.clip = audioClips[0];
                 audioSource.Play();
 
-                if (runnersInRange.Length <= 0) { print("No runners in range"); return; }
+                if (runnersInRange.Length <= 0)
+                {
+                    print("No runners in range");
+                    return;
+                }
 
-                foreach(Collider2D r in runnersInRange)
+                foreach (Collider2D r in runnersInRange)
                 {
                     if (r.gameObject.GetComponent<Rigidbody2D>() != null && r.gameObject.GetComponent<Person>() != null)
                     {
+                        // Vector from player to the escapee
+                        Vector2 vectorToEscapee = escapee.transform.position - transform.position;
+
+                        // Vector from player to the runner
+                        Vector2 vectorToRunner = r.transform.position - transform.position;
+
+                        // Cross product to determine side
+                        float cross = vectorToEscapee.x * vectorToRunner.y - vectorToEscapee.y * vectorToRunner.x;
+
+                        // Determine the perpendicular vector to push the runner
+                        Vector2 perpendicularVectorToEscapee = (cross > 0)
+                            ? new Vector2(-vectorToEscapee.y, vectorToEscapee.x) // Clockwise direction
+                            : new Vector2(vectorToEscapee.y, -vectorToEscapee.x); // Counterclockwise direction
+
+                        // Normalize and apply force
                         r.gameObject.GetComponent<Person>().SetStunnedStatus(true);
                         r.gameObject.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
-                        r.gameObject.GetComponent<Rigidbody2D>().AddForce((r.transform.position - transform.position).normalized * 
-                            (5 - Vector2.Distance(r.transform.position, transform.position)) * 100);
+                        r.gameObject.GetComponent<Rigidbody2D>().AddForce(perpendicularVectorToEscapee.normalized *
+                            (5 - Vector2.Distance(r.transform.position, transform.position)) * 50);
                     }
                 }
-
             }
+
         }
 
         else if (flinched)
         {
             Invoke("RecoverFromFlinch", .5f);
+        }
+    }
+
+    void SpeedBoost()
+    {
+        speed = startSpeed * 1.5f;
+
+        StartCoroutine(SlowDownBackToNormalSpeed());
+    }
+
+    IEnumerator SlowDownBackToNormalSpeed()
+    {
+        while (speed > startSpeed)
+        {
+            speed -= Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private void ChangeAnimation(string animation, float crossfade)
+    {
+        if (currentAnim != animation)
+        {
+            currentAnim = animation;
+            animator.CrossFade(animation, crossfade);
         }
     }
 

@@ -3,98 +3,177 @@ using UnityEngine;
 
 public class Escapee : MonoBehaviour
 {
-    [SerializeField] GameObject player;
-    [SerializeField] float speed = 5f;                  // Movement speed
-    [SerializeField] float smoothTurnSpeed = 2f;        // Smooth turning speed
-    [SerializeField] float safeDistance = 20f;          // Distance threshold for random movement
-    [SerializeField] float randomDirectionChangeInterval = 3f; // Interval for random direction change
+    [SerializeField] private GameObject player;
+    [SerializeField] private float baseSpeed = 5f;
+    [SerializeField] private float turnSpeed = 2f;
+    [SerializeField] private float safeDistance = 20f;
+    [SerializeField] private float patrolRadius = 3f;
+    [SerializeField] private float directionChangeInterval = 3f;
+    [SerializeField] private float speedBoostMultiplier = 1.3f;
+    [SerializeField] private float maxSpeed = 6f;
+    [SerializeField] private float minSpeed = 2f;
+    [SerializeField] private float speedDecayRate = 0.5f; // Rate of speed decay per second
 
     private Rigidbody2D rb;
-    private Vector2 currentDirection;     // The direction the object is currently moving towards
-    private Vector2 targetDirection;      // The direction to move towards while wandering
-    private bool isWandering = false;     // Flag to indicate if it's wandering
-    private float startSpeed;
+    private Animator animator;
+    private SpriteRenderer spriteRenderer;
 
-    void Start()
+    private Vector2 currentDirection;
+    private Vector2 patrolDirection;
+    private float currentSpeed;
+    private bool isPatrolling = true;
+    private bool isSpeedBoosted = false;
+    private float escapeTimer = 0f;
+
+    private string currentAnim = "";
+
+    private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        currentDirection = (transform.position - player.transform.position).normalized; // Initially away from the player
-        targetDirection = currentDirection; // Start with moving away from the player
-        StartCoroutine(ChangeDirectionRoutine()); // Start random wandering direction changes
-        startSpeed = speed;
+        animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+
+        currentSpeed = baseSpeed;
+        currentDirection = Vector2.right; // Initial direction
+        patrolDirection = GetRandomPatrolDirection();
+
+        StartCoroutine(PatrolDirectionChangeRoutine());
     }
 
-    void FixedUpdate()
+    private void Update()
     {
-        // Get the distance from the player
+        HandleAnimation();
+        HandleSpeedBoostDetection();
+    }
+
+    private void FixedUpdate()
+    {
         float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
 
-        // If within safe distance, run away from the player
-        if (distanceToPlayer < safeDistance)
+        if (distanceToPlayer < safeDistance && !player.GetComponent<PlayerMove>().GetDetainedStatus())
         {
-            MoveAwayFromPlayer();
+            EscapeFromPlayer();
         }
         else
         {
-            // If far from the player, wander around randomly
-            if (!isWandering)
-            {
-                isWandering = true;
-                StartCoroutine(ChangeDirectionRoutine()); // Start random wandering when far from player
-            }
-
-            MoveRandomly();
+            Patrol();
         }
     }
 
-    // Run away from the player with smooth turns
-    void MoveAwayFromPlayer()
+    private void EscapeFromPlayer()
     {
+        isPatrolling = false;
+
         // Calculate direction away from the player
-        Vector2 awayFromPlayerDirection = (transform.position - player.transform.position).normalized;
+        Vector2 directionAwayFromPlayer = (transform.position - player.transform.position).normalized;
 
-        // Smoothly interpolate towards the direction away from the player
-        currentDirection = Vector2.Lerp(currentDirection, awayFromPlayerDirection, Time.deltaTime * smoothTurnSpeed);
+        // Update direction
+        currentDirection = Vector2.Lerp(currentDirection, directionAwayFromPlayer, Time.deltaTime * turnSpeed);
 
-        if (Vector3.Distance(transform.position, player.transform.position) < 3)
+        // Decay speed over time during escape
+        escapeTimer += Time.deltaTime;
+        currentSpeed = Mathf.Clamp(baseSpeed - (speedDecayRate * escapeTimer), minSpeed, maxSpeed);
+
+        rb.velocity = currentDirection * currentSpeed;
+
+        // Reset patrol state when speed drops to minimum
+        if (currentSpeed <= minSpeed)
         {
-            speed *= 1.5f;
-            StartCoroutine(SpeedUp());
-        }
-
-        // Apply movement in the calculated direction, ensuring no downward movement
-        rb.velocity = new Vector2(currentDirection.x, Mathf.Max(currentDirection.y, 0)) * speed;
-    }
-
-    // Move randomly when far from the player with smooth turns
-    void MoveRandomly()
-    {
-        // Smoothly interpolate towards the random target direction
-        currentDirection = Vector2.Lerp(currentDirection, targetDirection, Time.deltaTime * smoothTurnSpeed);
-
-        // Apply movement in the calculated direction, ensuring no downward movement
-        rb.velocity = new Vector2(currentDirection.x, Mathf.Max(currentDirection.y, 0)) * speed;
-    }
-
-    // Coroutine to periodically change direction when wandering
-    IEnumerator ChangeDirectionRoutine()
-    {
-        while (true)
-        {
-            // Change direction every randomDirectionChangeInterval when wandering
-            yield return new WaitForSeconds(randomDirectionChangeInterval);
-
-            // Pick a random direction for wandering
-            targetDirection = new Vector2(Random.Range(-1f, 1f), Random.Range(0f, 1f)).normalized; // Ensure no negative Y movement
+            escapeTimer = 0f; // Reset timer for future escapes
+            isPatrolling = true;
+            StartCoroutine(PatrolDirectionChangeRoutine());
         }
     }
 
-    IEnumerator SpeedUp()
+    private void Patrol()
     {
-        while (speed > startSpeed)
+        if (!isPatrolling)
         {
-            speed -= Time.deltaTime / 1.5f;
-            yield return null;
+            isPatrolling = true;
+            StartCoroutine(PatrolDirectionChangeRoutine());
         }
+
+        // Smoothly transition to the patrol direction
+        currentDirection = Vector2.Lerp(currentDirection, patrolDirection, Time.deltaTime * turnSpeed);
+
+        rb.velocity = currentDirection * (baseSpeed * 0.75f);
+    }
+
+    private void HandleSpeedBoostDetection()
+    {
+        if (isSpeedBoosted) return;
+
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, 1f);
+        foreach (var collider in colliders)
+        {
+            if (collider.CompareTag("Runner"))
+            {
+                StartCoroutine(SpeedBoost());
+                break;
+            }
+        }
+    }
+
+    private IEnumerator SpeedBoost()
+    {
+        isSpeedBoosted = true;
+        float boostedSpeed = Mathf.Min(baseSpeed * speedBoostMultiplier, maxSpeed);
+        currentSpeed = boostedSpeed;
+
+        yield return new WaitForSeconds(1.5f); // Speed boost duration
+
+        currentSpeed = baseSpeed;
+        isSpeedBoosted = false;
+    }
+
+    private IEnumerator PatrolDirectionChangeRoutine()
+    {
+        while (isPatrolling)
+        {
+            patrolDirection = GetRandomPatrolDirection();
+            yield return new WaitForSeconds(directionChangeInterval);
+        }
+    }
+
+    private Vector2 GetRandomPatrolDirection()
+    {
+        // Generate a random direction within the patrol radius
+        float x = Random.Range(-patrolRadius, patrolRadius);
+        float y = Random.Range(-patrolRadius, patrolRadius);
+        return new Vector2(x, y).normalized;
+    }
+
+    private void HandleAnimation()
+    {
+        if (rb.velocity.magnitude > 0.1f)
+        {
+            ChangeAnimation("EscRun", 0.2f);
+        }
+        else
+        {
+            ChangeAnimation("EscIdle", 0.2f);
+        }
+
+        // Flip sprite based on movement direction
+        spriteRenderer.flipX = rb.velocity.x > 0;
+    }
+
+    private void ChangeAnimation(string animation, float crossfade)
+    {
+        if (currentAnim != animation)
+        {
+            currentAnim = animation;
+            animator.CrossFade(animation, crossfade);
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        // Visualize the safe distance and patrol radius in the editor
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, safeDistance);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, patrolRadius);
     }
 }
