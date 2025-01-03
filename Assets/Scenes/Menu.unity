@@ -135,6 +135,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 5033077112836346024, guid: ca56177bdc8427544beced37a8b8b982, type: 3}
+      propertyPath: musicTracks.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5033077112836346024, guid: ca56177bdc8427544beced37a8b8b982, type: 3}
+      propertyPath: musicTracks.Array.data[2]
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 6772266295461684260, guid: ca56177bdc8427544beced37a8b8b982, type: 3}
       propertyPath: m_Name
       value: BGM 1

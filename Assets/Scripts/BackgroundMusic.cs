@@ -15,9 +15,9 @@ public class BackgroundMusicShuffle : MonoBehaviour
         // Initialize AudioSources
         audioSources = GetComponents<AudioSource>();
 
-        if (audioSources.Length < 3)
+        if (audioSources.Length < 2)
         {
-            Debug.LogError("Please attach at least 3 AudioSources to this GameObject.");
+            Debug.LogError("Please attach at least 2 AudioSources to this GameObject.");
             return;
         }
 

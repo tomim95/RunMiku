@@ -10,6 +10,7 @@ TagManager:
   - HUDCanvas
   - InstructionsCanvas
   - BGM
+  - Note
   layers:
   - Default
   - TransparentFX

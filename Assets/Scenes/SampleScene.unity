@@ -231,6 +231,10 @@ PrefabInstance:
       propertyPath: player
       value: 
       objectReference: {fileID: 4281126715383520592}
+    - target: {fileID: 869601602920691324, guid: 060c7a7fc30504e4495aa2a85dedfcf3, type: 3}
+      propertyPath: spawnRange
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 5036392534870471130, guid: 060c7a7fc30504e4495aa2a85dedfcf3, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -395,6 +399,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3240111353260344964, guid: a30847e0e12d14446b9ad8df1f99b43d, type: 3}
+      propertyPath: notePrefab
+      value: 
+      objectReference: {fileID: 512406069214788320, guid: d7be762f6b1842d4f96523208643110e, type: 3}
+    - target: {fileID: 3240111353260344964, guid: a30847e0e12d14446b9ad8df1f99b43d, type: 3}
+      propertyPath: noteLifeTime
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3240111353260344964, guid: a30847e0e12d14446b9ad8df1f99b43d, type: 3}
+      propertyPath: noteSpawnRate
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4033776434441885548, guid: a30847e0e12d14446b9ad8df1f99b43d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3.69
@@ -439,6 +455,10 @@ PrefabInstance:
       propertyPath: player
       value: 
       objectReference: {fileID: 4281126715383520592}
+    - target: {fileID: 7436352702608821782, guid: a30847e0e12d14446b9ad8df1f99b43d, type: 3}
+      propertyPath: safeDistance
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 8854477617591785875, guid: a30847e0e12d14446b9ad8df1f99b43d, type: 3}
       propertyPath: m_Name
       value: Escapee
@@ -557,6 +577,10 @@ PrefabInstance:
       propertyPath: player
       value: 
       objectReference: {fileID: 4281126715383520592}
+    - target: {fileID: 5860025347741852401, guid: dd3aed483ff01d44aa45c6ec044b169c, type: 3}
+      propertyPath: cameraSpeed
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 8470751960208107959, guid: dd3aed483ff01d44aa45c6ec044b169c, type: 3}
       propertyPath: m_Name
       value: Main Camera
@@ -571,6 +595,102 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8940925989621590115, guid: ae3ba3c50c208014c957b06f2f8b8879, type: 3}
   m_PrefabInstance: {fileID: 4394765639513907045}
   m_PrefabAsset: {fileID: 0}
+--- !u!82 &4281126715383520593
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4281126715383520592}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: 85c7edd9e31c4104d80327fc2879a6db, type: 3}
+  m_PlayOnAwake: 0
+  m_Volume: 0.1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1001 &4394765639513907045
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -583,6 +703,10 @@ PrefabInstance:
       propertyPath: guide
       value: 
       objectReference: {fileID: 6853418929118208452}
+    - target: {fileID: 764035475671590903, guid: ae3ba3c50c208014c957b06f2f8b8879, type: 3}
+      propertyPath: speed
+      value: 5.4
+      objectReference: {fileID: 0}
     - target: {fileID: 764035475671590903, guid: ae3ba3c50c208014c957b06f2f8b8879, type: 3}
       propertyPath: runner
       value: 
@@ -627,6 +751,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8077748534531283949, guid: ae3ba3c50c208014c957b06f2f8b8879, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8940925989621590115, guid: ae3ba3c50c208014c957b06f2f8b8879, type: 3}
       propertyPath: m_Name
       value: Player
@@ -634,7 +762,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8940925989621590115, guid: ae3ba3c50c208014c957b06f2f8b8879, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4281126715383520593}
   m_SourcePrefab: {fileID: 100100000, guid: ae3ba3c50c208014c957b06f2f8b8879, type: 3}
 --- !u!1001 &6477470368227831374
 PrefabInstance:

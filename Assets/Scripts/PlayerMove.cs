@@ -33,12 +33,14 @@ public class PlayerMove : MonoBehaviour
     private bool detained = false;
     private bool skillOnCooldown = true;
     private bool wasGameOn = false;
+    private AudioSource coinAudioSource;
 
     //TODO remove?
     private string currentAnim = "";
 
     public bool flinched = false;
 
+    private float baseSpeed;
     private float startSpeed;
 
     public void SetDetained(bool detained) 
@@ -71,7 +73,11 @@ public class PlayerMove : MonoBehaviour
         animator = GetComponent<Animator>();
         gameManager = FindObjectOfType<GameManager>();
         startSpeed = speed;
+        baseSpeed = speed;
         ChangeAnimation("Idle", 0.2f);
+
+        var audiosources = GetComponents<AudioSource>();
+        coinAudioSource = audiosources[1];
 
         if (skillIcon == null)
         {
@@ -83,6 +89,8 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
+        print(rb.velocity.magnitude);
+
         // Check if gameIsOn has just transitioned from false to true
         if (gameManager.gameIsOn && !wasGameOn)
         {
@@ -225,6 +233,7 @@ public class PlayerMove : MonoBehaviour
 
             else if (flinched)
             {
+                transform.GetChild(1).gameObject.SetActive(true);
                 ChangeAnimation("Flinch", 0);
                 Invoke("RecoverFromFlinch", .5f);
             }
@@ -264,6 +273,7 @@ public class PlayerMove : MonoBehaviour
 
     private void RecoverFromFlinch()
     {
+        transform.GetChild(1).gameObject.SetActive(false);
         flinched = false;
     }
 
@@ -364,5 +374,23 @@ public class PlayerMove : MonoBehaviour
             collision.gameObject.GetComponent<Escapee>().EnableHeart();
             gameManager.HandleGameWin();
         }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Note")
+        {
+            coinAudioSource.Play();
+            gameManager.AddNote();
+            Destroy(collision.gameObject);
+            speed += .05f;
+            startSpeed += .05f;
+        }
+    }
+
+    public void ResetMoveSpeed()
+    {
+        speed = baseSpeed;
+        startSpeed = baseSpeed;
     }
 }

@@ -69,7 +69,7 @@ public class Person : MonoBehaviour
 
     void Start()
     {
-        runnerType = Random.Range(0, 2);
+        runnerType = Random.Range(0, 5);
         audioSources = GetComponents<AudioSource>();
         animator = GetComponent<Animator>();
 
@@ -94,7 +94,19 @@ public class Person : MonoBehaviour
             {
                 ChangeAnimation("Runner2Run", .2f);
             }
-            
+            else if (runnerType == 2)
+            {
+                ChangeAnimation("Runner3Run", .2f);
+            }
+            else if (runnerType == 3)
+            {
+                ChangeAnimation("Runner4Run", 0);
+            }
+            else if (runnerType == 4)
+            {
+                ChangeAnimation("Runner5Run", 0);
+            }
+
             gameObject.tag = "Runner";
             speed = Random.Range(runnerMinSpeed, runnerMaxSpeed);
             chaseTarget = escapee;
@@ -193,6 +205,7 @@ public class Person : MonoBehaviour
 
     private void Update()
     {
+        transform.position = new Vector3(transform.position.x, transform.position.y, 0.05f);
         if (!gameManager.gameIsOn)
         {
             Destroy(gameObject);
@@ -305,6 +318,19 @@ public class Person : MonoBehaviour
         {
             ChangeAnimation("Runner2Run", 0);
         }
+        else if (runnerType == 2)
+        {
+            ChangeAnimation("Runner3Run", 0);
+        }
+        else if (runnerType == 3)
+        {
+            ChangeAnimation("Runner4Run", 0);
+        }
+        else if (runnerType == 4)
+        {
+            ChangeAnimation("Runner5Run", 0);
+        }
+
 
         pushing = false;
     }
@@ -370,6 +396,7 @@ public class Person : MonoBehaviour
                 audioSource = audioSources[3];
                 audioSource.clip = audioClips3[Random.Range(0, audioClips3.Length)];
                 audioSource.Play();
+                gameManager.LoseNotes();
 
                 if (runnerType == 0)
                 {
@@ -379,12 +406,25 @@ public class Person : MonoBehaviour
                 {
                     ChangeAnimation("Runner2Push", 0);
                 }
+                else if (runnerType == 2)
+                {
+                    ChangeAnimation("Runner3Push", 0);
+                }
+                else if (runnerType == 3)
+                {
+                    ChangeAnimation("Runner4Push", 0);
+                }
+                else if (runnerType == 4)
+                {
+                    ChangeAnimation("Runner5Push", 0);
+                }
 
                 chaseTarget = null;
                 rb.velocity = Vector2.zero;
                 pushing = true;
                 Invoke("Recover", .5f);  // You can modify the recovery time here if needed
                 collision.gameObject.GetComponent<PlayerMove>().flinched = true;
+                collision.gameObject.GetComponent<PlayerMove>().ResetMoveSpeed();
                 collision.gameObject.GetComponent<Rigidbody2D>().AddForce((collision.gameObject.transform.position - transform.position).normalized * 200);
                 chaseTarget = escapee;
             }

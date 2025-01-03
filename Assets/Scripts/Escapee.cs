@@ -23,6 +23,11 @@ public class Escapee : MonoBehaviour
     private Vector2 patrolDirection;
     private float currentSpeed;
     private bool isPatrolling = true;
+    public bool IsPatrolling
+    {
+        get { return isPatrolling; }
+    }
+
     private bool isSpeedBoosted = false;
     private float escapeTimer = 0f;
 
@@ -47,7 +52,6 @@ public class Escapee : MonoBehaviour
     {
         if (gameManager.gameIsOn)
         {
-            print($"Speed: {currentSpeed}, BaseSpeed: {baseSpeed} ");
             HandleAnimation();
             HandleSpeedBoostDetection();
         }

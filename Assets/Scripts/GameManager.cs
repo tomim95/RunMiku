@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour
     public bool gameIsOn = false;
     private GameObject escapee;
     private Animator escapeeAnimator;
+    private TMP_Text noteCounter;
 
     public static GameManager Instance { get; private set; }  // Singleton instance
 
@@ -25,6 +26,7 @@ public class GameManager : MonoBehaviour
     private bool instructionsSeen = false;
     private bool gameHasStarted = false;
     private float gameTimer;
+    private int noteCount;
 
     void Awake()
     {
@@ -101,7 +103,13 @@ public class GameManager : MonoBehaviour
             if (gameIsOn && timerText != null)
             {
                 gameTimer += Time.deltaTime;
-                timerText.text = gameTimer.ToString("F2");
+                timerText.text = gameTimer.ToString("F2") + "s";
+            }
+
+            if (gameIsOn && hudCanvas != null && hudCanvas.transform.Find("NoteCounter"))
+            {
+                noteCounter = hudCanvas.transform.Find("NoteCounter").transform.GetChild(1).GetComponent<TMP_Text>();
+                noteCounter.text = ($"x {noteCount}");
             }
         }
     }
@@ -113,6 +121,12 @@ public class GameManager : MonoBehaviour
             startTimer += Time.deltaTime;
             yield return null;
         }
+
+        if (!hudCanvas)
+        {
+            hudCanvas = GameObject.FindGameObjectWithTag("HUDCanvas");
+        }
+
         gameIsOn = true;
         SetCrowdNoises();
     }
@@ -209,6 +223,7 @@ public class GameManager : MonoBehaviour
         gameTimer = 0;
         startTimer = 0;
         instructionsSeen = false;
+        noteCount = 0;
 
         if (instructionsCanvas)
         {
@@ -267,6 +282,16 @@ public class GameManager : MonoBehaviour
         {
             escapee = FindObjectOfType<Escapee>().gameObject;
         }
+    }
+
+    public void AddNote()
+    {
+        noteCount++;
+    }
+
+    public void LoseNotes()
+    {
+        noteCount = 0;
     }
 
 }
