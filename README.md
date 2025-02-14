@@ -1,4 +1,4 @@
-# Damdidam (Run Miku)
+#Run Miku
 
 About the Game:
 Run Miku is a fast-paced 2D game I created in a week as a birthday gift for my partner. In a way, this project was my personal game jam, pushing me to design, code, and create all assets within a short timeframe.
